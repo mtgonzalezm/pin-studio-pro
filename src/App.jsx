@@ -307,4 +307,3 @@ export default function PinStudio() {
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
     </div>
   );
-}
