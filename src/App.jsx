@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Download, Upload } from 'lucide-react';
+import { Trash2, Download, Upload, Plus, X } from 'lucide-react';
 
 export default function PinStudio() {
   const canvasRef = useRef(null);
@@ -13,10 +13,15 @@ export default function PinStudio() {
   const [startPos, setStartPos] = useState(null);
   const [currentDraw, setCurrentDraw] = useState(null);
   const [globalPinSize, setGlobalPinSize] = useState(12);
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [contentType, setContentType] = useState('text');
+  const [contentText, setContentText] = useState('');
 
   const icons = {
     star: '⭐', diamond: '💎', circle: '●', heart: '❤️', target: '🎯',
     bell: '🔔', flag: '🚩', pin: '📍', spark: '✨', flame: '🔥',
+    checkmark: '✓', question: '?', info: 'ℹ️', light: '💡', map: '🗺️', book: '📚',
+    smile: '😊', lightbulb: '💡', rocket: '🚀', star2: '⭐', award: '🏆',
   };
 
   const handleImageUpload = (e) => {
@@ -71,6 +76,15 @@ export default function PinStudio() {
         pinColor: '#3B82F6',
         numberColor: '#FFFFFF',
         showBorder: true,
+        content: {
+          type: 'text',
+          text: '',
+          url: '',
+          videoUrl: '',
+          quizQuestion: '',
+          quizOptions: [],
+          quizCorrect: 0,
+        }
       }]);
     }
     setCurrentDraw(null);
@@ -86,13 +100,29 @@ export default function PinStudio() {
     if (selectedHotspot?.id === id) setSelectedHotspot(null);
   };
 
+  const saveContent = () => {
+    if (!selectedHotspot) return;
+    const newContent = { ...selectedHotspot.content, type: contentType };
+    
+    if (contentType === 'text') newContent.text = contentText;
+    else if (contentType === 'url') newContent.url = contentText;
+    else if (contentType === 'video') newContent.videoUrl = contentText;
+    else if (contentType === 'quiz') {
+      newContent.quizQuestion = contentText;
+    }
+
+    updateHotspot(selectedHotspot.id, { content: newContent });
+    setShowContentModal(false);
+    setContentText('');
+  };
+
   const exportJSON = () => {
-    const data = { hotspots, version: '1.0.0' };
+    const data = { hotspots, version: '2.0.0', timestamp: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'proyecto.json';
+    a.download = 'pin-studio-proyecto.json';
     a.click();
   };
 
@@ -149,112 +179,99 @@ export default function PinStudio() {
 
   if (!image) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-md w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-              🎯 PIN STUDIO
-            </h1>
-            <p className="text-gray-600 text-lg">Crea imágenes interactivas</p>
-          </div>
-          <button 
-            onClick={() => fileInputRef.current?.click()} 
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition shadow-lg hover:shadow-xl"
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ background: 'white', borderRadius: '30px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '48px', maxWidth: '448px', width: '100%', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '48px', fontWeight: 900, backgroundImage: 'linear-gradient(to right, #2563eb, #4f46e5)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '16px' }}>
+            🎯 PIN STUDIO PRO
+          </h1>
+          <p style={{ color: '#4b5563', fontSize: '18px', marginBottom: '32px' }}>Crea imágenes interactivas con hotspots</p>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{ background: 'linear-gradient(to right, #3b82f6, #4f46e5)', color: 'white', fontWeight: 700, padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', width: '100%', border: 'none', cursor: 'pointer', fontSize: '16px' }}
           >
             <Upload size={24} /> Subir imagen
           </button>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+    <div style={{ minHeight: '100vh', background: '#f3f4f6' }}>
+      <div style={{ background: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '20px 24px', position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-              🎯 PIN STUDIO
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">{hotspots.length} hotspots activos</p>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1f2937' }}>🎯 PIN STUDIO PRO</h1>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>{hotspots.length} hotspots | {globalPinSize}px</p>
           </div>
-          <button 
-            onClick={() => fileInputRef.current?.click()} 
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold transition"
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{ background: '#e5e7eb', color: '#1f2937', padding: '8px 24px', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
           >
             📸 Cambiar imagen
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex gap-3 mb-6">
-              <button 
-                onClick={() => setDrawMode(drawMode === 'rect' ? null : 'rect')} 
-                className={`px-6 py-3 rounded-lg font-semibold transition ${drawMode === 'rect' ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200'}`}
-              >
-                ▭ Rectángulo
-              </button>
-              <button 
-                onClick={() => setDrawMode(drawMode === 'circle' ? null : 'circle')} 
-                className={`px-6 py-3 rounded-lg font-semibold transition ${drawMode === 'circle' ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200'}`}
-              >
-                ◯ Círculo
-              </button>
-              <div className="ml-auto flex items-center gap-2 text-sm text-gray-600">
-                <span>📏 Tamaño:</span>
-                <input 
-                  type="range" 
-                  min="6" 
-                  max="24" 
-                  value={globalPinSize} 
-                  onChange={(e) => setGlobalPinSize(parseInt(e.target.value))} 
-                  className="w-24"
-                />
-                <span className="font-bold">{globalPinSize}px</span>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 overflow-hidden">
-              <canvas 
-                ref={canvasRef} 
-                onMouseDown={handleCanvasMouseDown} 
-                onMouseMove={handleCanvasMouseMove} 
-                onMouseUp={handleCanvasMouseUp} 
-                onMouseLeave={handleCanvasMouseUp} 
-                className={`w-full ${drawMode ? 'cursor-crosshair' : 'cursor-default'}`}
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '32px' }}>
+        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+            <button
+              onClick={() => setDrawMode(drawMode === 'rect' ? null : 'rect')}
+              style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer', background: drawMode === 'rect' ? '#3b82f6' : '#f3f4f6', color: drawMode === 'rect' ? 'white' : '#1f2937' }}
+            >
+              ▭ Rectángulo
+            </button>
+            <button
+              onClick={() => setDrawMode(drawMode === 'circle' ? null : 'circle')}
+              style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer', background: drawMode === 'circle' ? '#3b82f6' : '#f3f4f6', color: drawMode === 'circle' ? 'white' : '#1f2937' }}
+            >
+              ◯ Círculo
+            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' }}>
+              <span>📏 Tamaño:</span>
+              <input
+                type="range"
+                min="6"
+                max="24"
+                value={globalPinSize}
+                onChange={(e) => setGlobalPinSize(parseInt(e.target.value))}
+                style={{ width: '100px' }}
               />
+              <span style={{ fontWeight: 'bold' }}>{globalPinSize}px</span>
             </div>
+          </div>
+          <div style={{ background: '#f9fafb', borderRadius: '12px', border: '2px dashed #d1d5db', overflow: 'hidden' }}>
+            <canvas
+              ref={canvasRef}
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseLeave={handleCanvasMouseUp}
+              style={{ width: '100%', cursor: drawMode ? 'crosshair' : 'default' }}
+            />
           </div>
         </div>
 
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="font-bold text-lg mb-4 text-gray-800">🎯 Hotspots</h3>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
+            <h3 style={{ fontWeight: 700, fontSize: '18px', marginBottom: '16px', color: '#1f2937' }}>🎯 Hotspots ({hotspots.length})</h3>
+            <div style={{ maxHeight: '396px', overflowY: 'auto' }}>
               {hotspots.length === 0 ? (
-                <p className="text-gray-500 text-sm">Dibuja hotspots en la imagen</p>
+                <p style={{ color: '#9ca3af', fontSize: '14px' }}>Dibuja hotspots en la imagen</p>
               ) : (
                 hotspots.map((h, idx) => (
-                  <div 
-                    key={h.id} 
-                    onClick={() => setSelectedHotspot(h)} 
-                    className={`p-3 rounded-lg cursor-pointer transition border-2 ${
-                      selectedHotspot?.id === h.id 
-                        ? 'bg-blue-50 border-blue-500' 
-                        : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                    }`}
+                  <div
+                    key={h.id}
+                    onClick={() => setSelectedHotspot(h)}
+                    style={{ padding: '12px', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.3s', border: '2px solid', marginBottom: '8px', background: selectedHotspot?.id === h.id ? '#eff6ff' : '#f9fafb', borderColor: selectedHotspot?.id === h.id ? '#3b82f6' : '#e5e7eb' }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" 
-                        style={{ backgroundColor: h.pinColor }}
-                      >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '14px', fontWeight: 'bold', background: h.pinColor }}>
                         {idx + 1}
                       </div>
-                      <p className="font-semibold text-sm text-gray-800">{h.name}</p>
+                      <p style={{ fontWeight: 600, fontSize: '14px', color: '#1f2937' }}>{h.name}</p>
                     </div>
                   </div>
                 ))
@@ -263,33 +280,33 @@ export default function PinStudio() {
           </div>
 
           {selectedHotspot && (
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-lg text-gray-800">⚙️ Personalizar</h3>
-                <button 
-                  onClick={() => deleteHotspot(selectedHotspot.id)} 
-                  className="text-red-500 hover:text-red-700 transition"
+            <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#1f2937' }}>⚙️ Personalizar</h3>
+                <button
+                  onClick={() => deleteHotspot(selectedHotspot.id)}
+                  style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
                 >
                   <Trash2 size={20} />
                 </button>
               </div>
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">Nombre</label>
-                  <input 
-                    type="text" 
-                    value={selectedHotspot.name} 
-                    onChange={(e) => updateHotspot(selectedHotspot.id, { name: e.target.value })} 
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <label style={{ fontSize: '14px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Nombre</label>
+                  <input
+                    type="text"
+                    value={selectedHotspot.name}
+                    onChange={(e) => updateHotspot(selectedHotspot.id, { name: e.target.value })}
+                    style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px', fontSize: '14px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">Icono</label>
-                  <select 
-                    value={selectedHotspot.pinIcon} 
-                    onChange={(e) => updateHotspot(selectedHotspot.id, { pinIcon: e.target.value })} 
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <label style={{ fontSize: '14px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Icono</label>
+                  <select
+                    value={selectedHotspot.pinIcon}
+                    onChange={(e) => updateHotspot(selectedHotspot.id, { pinIcon: e.target.value })}
+                    style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px', fontSize: '14px' }}
                   >
                     {Object.entries(icons).map(([key, emoji]) => (
                       <option key={key} value={key}>{emoji} {key}</option>
@@ -298,46 +315,29 @@ export default function PinStudio() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">
-                    Tamaño: {selectedHotspot.pinSize}px
-                  </label>
-                  <input 
-                    type="range" 
-                    min="6" 
-                    max="24" 
-                    value={selectedHotspot.pinSize} 
-                    onChange={(e) => updateHotspot(selectedHotspot.id, { pinSize: parseInt(e.target.value) })} 
-                    className="w-full"
+                  <label style={{ fontSize: '14px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Color PIN</label>
+                  <input
+                    type="color"
+                    value={selectedHotspot.pinColor}
+                    onChange={(e) => updateHotspot(selectedHotspot.id, { pinColor: e.target.value })}
+                    style={{ width: '100%', height: '40px', borderRadius: '8px', border: '1px solid #d1d5db', cursor: 'pointer' }}
                   />
                 </div>
 
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">Color PIN</label>
-                  <input 
-                    type="color" 
-                    value={selectedHotspot.pinColor} 
-                    onChange={(e) => updateHotspot(selectedHotspot.id, { pinColor: e.target.value })} 
-                    className="w-full h-10 rounded-lg cursor-pointer border border-gray-300"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">Color Número</label>
-                  <input 
-                    type="color" 
-                    value={selectedHotspot.numberColor} 
-                    onChange={(e) => updateHotspot(selectedHotspot.id, { numberColor: e.target.value })} 
-                    className="w-full h-10 rounded-lg cursor-pointer border border-gray-300"
-                  />
-                </div>
+                <button
+                  onClick={() => setShowContentModal(true)}
+                  style={{ background: '#8b5cf6', color: 'white', padding: '12px', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Plus size={18} /> Añadir contenido
+                </button>
               </div>
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <button 
-              onClick={exportJSON} 
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition shadow-lg"
+          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
+            <button
+              onClick={exportJSON}
+              style={{ width: '100%', background: 'linear-gradient(to right, #a855f7, #d946ef)', color: 'white', fontWeight: 700, padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
               <Download size={20} /> Exportar JSON
             </button>
@@ -345,7 +345,64 @@ export default function PinStudio() {
         </div>
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+      {showContentModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '32px', maxWidth: '500px', width: '90%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 700 }}>Añadir contenido</h2>
+              <button onClick={() => setShowContentModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Tipo de contenido</label>
+              <select
+                value={contentType}
+                onChange={(e) => setContentType(e.target.value)}
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px', fontSize: '14px' }}
+              >
+                <option value="text">📝 Texto</option>
+                <option value="url">🔗 URL/Enlace</option>
+                <option value="video">🎥 Video (YouTube)</option>
+                <option value="quiz">🎓 Quiz</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                {contentType === 'text' && 'Texto'}
+                {contentType === 'url' && 'URL'}
+                {contentType === 'video' && 'URL del video'}
+                {contentType === 'quiz' && 'Pregunta'}
+              </label>
+              <textarea
+                value={contentText}
+                onChange={(e) => setContentText(e.target.value)}
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px', fontSize: '14px', minHeight: '100px', fontFamily: 'inherit' }}
+                placeholder={contentType === 'text' ? 'Escribe el texto...' : contentType === 'url' ? 'Escribe la URL...' : 'Escribe la pregunta...'}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={saveContent}
+                style={{ flex: 1, background: '#3b82f6', color: 'white', padding: '12px', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+              >
+                Guardar
+              </button>
+              <button
+                onClick={() => setShowContentModal(false)}
+                style={{ flex: 1, background: '#e5e7eb', color: '#1f2937', padding: '12px', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
     </div>
   );
 }
