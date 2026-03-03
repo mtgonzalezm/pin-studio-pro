@@ -13,12 +13,9 @@
     "react-scripts": "5.0.1"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.27",
     "concurrently": "8.0.0",
     "electron": "31.0.0",
     "electron-builder": "25.0.0",
-    "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.1",
     "wait-on": "7.0.0"
   },
   "scripts": {
